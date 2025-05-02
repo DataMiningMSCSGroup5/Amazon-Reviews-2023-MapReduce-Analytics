@@ -1,0 +1,26 @@
+# === Python artefacts ===
+__pycache__/
+*.py[cod]
+*.pyd
+*.so
+*.egg-info/
+.ipynb_checkpoints/
+
+# === Environments ===
+.env
+.venv
+env/
+venv/
+.idea/
+.vscode/
+.mypy_cache/
+coverage.xml
+
+# === Data ===
+data/
+output/
+figs/
+
+# === OS / Editor cruft ===
+.DS_Store
+Thumbs.db
