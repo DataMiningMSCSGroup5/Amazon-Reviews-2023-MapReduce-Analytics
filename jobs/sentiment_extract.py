@@ -1,8 +1,9 @@
-from mrjob.job import MRJob, protocol
+from mrjob.job import MRJob
+from mrjob.protocol import RawValueProtocol
 import json, re
 
 class ExtractReviewText(MRJob):
-    OUTPUT_PROTOCOL = protocol.RawValueProtocol
+    OUTPUT_PROTOCOL = RawValueProtocol
     def mapper(self, _, line):
         rec = json.loads(line)
         text = re.sub(r"\s+", " ", rec.get("reviewText", "")).strip()

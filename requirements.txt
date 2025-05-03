@@ -1,0 +1,17 @@
+# Core MapReduce + data stack
+mrjob==0.9.3
+pandas>=2.2.1
+numpy>=1.26.4
+matplotlib>=3.8.4
+scipy>=1.12.0
+
+# NLP / text processing
+nltk>=3.8.1
+textblob>=0.17.1
+scikit-learn>=1.4.2
+
+# Streaming JSON for big auxiliary files
+ijson>=3.2.3
+
+# Command‑line progress bar (optional)
+tqdm>=4.66.2
