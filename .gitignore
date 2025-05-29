@@ -20,7 +20,7 @@ coverage.xml
 data_me/
 data/
 output/
-figs/
+# figs/
 
 # === OS / Editor cruft ===
 .DS_Store
