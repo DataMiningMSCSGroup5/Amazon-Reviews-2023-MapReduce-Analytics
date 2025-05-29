@@ -19,8 +19,8 @@ coverage.xml
 # === Data ===
 data_me/
 data/
-output/
-figs/
+# output/
+# figs/
 
 # === OS / Editor cruft ===
 .DS_Store

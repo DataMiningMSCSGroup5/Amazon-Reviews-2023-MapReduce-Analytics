@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -e
-DATA="data/Digital_Music.jsonl.gz"
+DATA="data/All_Beauty.jsonl.gz"
 
 python3 jobs/count_reviews.py           $DATA > output/review_counts.tsv
 python3 jobs/avg_rating.py              $DATA > output/avg_rating.tsv
