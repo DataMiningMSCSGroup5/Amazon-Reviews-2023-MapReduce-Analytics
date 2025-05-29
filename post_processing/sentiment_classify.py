@@ -10,6 +10,9 @@ nltk.download('vader_lexicon', quiet=True)
 df = pd.read_csv("output/reviews_for_nlp.tsv",
                  sep="\t", names=["rid","rating","text"])
 
+# Ensure text is string and handle missing values
+df["text"] = df["text"].fillna("").astype(str)
+
 sia = SentimentIntensityAnalyzer()
 df["compound"] = df["text"].apply(lambda t: sia.polarity_scores(t)["compound"])
 df["sentiment"] = pd.cut(df["compound"],
