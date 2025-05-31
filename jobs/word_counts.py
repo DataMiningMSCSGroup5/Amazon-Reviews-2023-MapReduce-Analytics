@@ -1,25 +1,23 @@
 #!/usr/bin/env python
 """
-word_counts.py  (improved)
+word_counts.py
 
 • Emits (word, 1) for reviews filtered by rating polarity.
-• Works with 2023 schema ("text") and older ("reviewText").
-• Removes punctuation, stop‑words, numbers, and tokens ≤2 chars.
+• Only uses the 'text' field (2023 schema).
+• Removes punctuation, stop-words, numbers, and tokens ≤2 chars.
+
 Usage:
-    python jobs/word_counts.py               data/*.jsonl.gz > words_all.tsv
-    python jobs/word_counts.py --polarity pos data/*.jsonl.gz > words_pos.tsv
-    python jobs/word_counts.py --polarity neg data/*.jsonl.gz > words_neg.tsv
+    python jobs/word_counts.py --polarity pos beauty_reviews.jsonl > output/words_pos.tsv
+    python jobs/word_counts.py --polarity neg beauty_reviews.jsonl > output/words_neg.tsv
 """
 from mrjob.job import MRJob
-import json, re, string, nltk, unicodedata
+import json, re, string, nltk
 
-# download once per interpreter
+# Download once per interpreter
 nltk.download("stopwords", quiet=True)
 STOP = set(nltk.corpus.stopwords.words("english")) | set(string.punctuation)
 
-TOKEN = re.compile(r"[A-Za-z]{3,}")   # ≥3 alpha chars
-
-TEXT_KEYS = ("text", "reviewText", "review_body")
+TOKEN = re.compile(r"[A-Za-z]{3,}")  # ≥3 alpha chars
 
 class WordCounts(MRJob):
     def configure_args(self):
@@ -29,16 +27,16 @@ class WordCounts(MRJob):
 
     def mapper(self, _, line):
         rec = json.loads(line)
-        rating = float(rec.get("rating") or rec.get("overall") or -1)
+        rating = float(rec.get("rating", -1))
 
         pol = self.options.polarity
         if (pol == "pos" and rating < 4) or (pol == "neg" and rating > 2):
             return
         if pol == "neg" and rating == 3:
-            return  # neutral row
+            return  # neutral
 
-        text_raw = next((rec.get(k) for k in TEXT_KEYS if k in rec), "")
-        for tok in TOKEN.findall(str(text_raw).lower()):
+        text = rec.get("text", "")
+        for tok in TOKEN.findall(text.lower()):
             if tok not in STOP:
                 yield tok, 1
 
