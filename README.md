@@ -38,7 +38,7 @@ AmazonReviewAnalysiswithMapReduce/
 
 ### Prerequisites
 
-- Python 3.7+
+- Python 3.10+
 - Pip package manager
 
 ### Installation
