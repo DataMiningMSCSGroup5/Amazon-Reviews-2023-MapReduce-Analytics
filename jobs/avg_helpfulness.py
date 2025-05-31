@@ -1,53 +1,33 @@
 from mrjob.job import MRJob
 import json
-from typing import Tuple, Iterator
+from typing import Iterator, Tuple
 
-class AvgHelpfulness(MRJob):
-    """Compute global average helpfulness score from Amazon reviews."""
+class BinaryHelpfulness(MRJob):
+    """Compute the proportion of reviews that were helpful (helpful_votes > 0)."""
 
-    KEY = "all"
-
-    def mapper(self, _, line: str) -> Iterator[Tuple[str, Tuple[int, float]]]:
-        """Extract helpfulness votes and yield (count, ratio) pairs."""
+    def mapper(self, _, line: str) -> Iterator[Tuple[str, Tuple[int, int]]]:
         try:
             rec = json.loads(line)
-        except Exception:
-            return  # skip malformed lines
+            helpful = rec.get("helpful_vote")
+            if helpful is not None:
+                is_helpful = 1 if helpful > 0 else 0
+                yield "all", (1, is_helpful)  # (total_reviews, helpful_reviews)
+        except:
+            pass
 
-        helpful, total = None, None
-        if "helpful" in rec and isinstance(rec["helpful"], list) and len(rec["helpful"]) == 2:
-            helpful, total = rec["helpful"]
-        elif "helpful_vote" in rec:
-            helpful = rec["helpful_vote"]
-            total = rec.get("total_vote", helpful)
-        if helpful is None or total is None:
-            return
-        try:
-            helpful = float(helpful)
-            total = float(total)
-        except Exception:
-            return
-        if total > 0:
-            yield self.KEY, (1, helpful / total)
+    def combiner(self, key, values):
+        total, helpful = 0, 0
+        for t, h in values:
+            total += t
+            helpful += h
+        yield key, (total, helpful)
 
-    def combiner(self, _, pairs: Iterator[Tuple[int, float]]) -> Iterator[Tuple[str, Tuple[int, float]]]:
-        """Aggregate counts and ratios locally."""
-        n, s = 0, 0.0
-        for c, sc in pairs:
-            n += c
-            s += sc
-        yield self.KEY, (n, s)
-
-    def reducer(self, _, pairs: Iterator[Tuple[int, float]]) -> Iterator[Tuple[str, float]]:
-        """Aggregate globally and compute the average helpfulness."""
-        n, s = 0, 0.0
-        for c, sc in pairs:
-            n += c
-            s += sc
-        if n > 0:
-            yield "average_helpfulness", round(s / n, 4)
-        else:
-            yield "average_helpfulness", 0.0
+    def reducer(self, key, values):
+        total, helpful = 0, 0
+        for t, h in values:
+            total += t
+            helpful += h
+        yield "proportion_helpful", round(helpful / total, 4)
 
 if __name__ == "__main__":
-    AvgHelpfulness.run()
+    BinaryHelpfulness.run()
