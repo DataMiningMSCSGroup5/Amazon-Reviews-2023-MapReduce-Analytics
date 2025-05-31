@@ -1,35 +1,41 @@
 from mrjob.job import MRJob
+from mrjob.step import MRStep
 import json
 import heapq
-from typing import Iterator, Tuple
 
 class Top10MostReviewed(MRJob):
-    """Output top 10 products with most reviews."""
 
-    def mapper(self, _, line: str) -> Iterator[Tuple[str, int]]:
-        """Yield (parent_asin, 1) for each review."""
+    def steps(self):
+        return [
+            MRStep(mapper=self.mapper_get_reviews,
+                   combiner=self.combiner_sum_reviews,
+                   reducer=self.reducer_sum_reviews),
+            MRStep(mapper=self.mapper_prepare_sort,
+                   reducer=self.reducer_find_top10)
+        ]
+
+    def mapper_get_reviews(self, _, line):
         try:
             rec = json.loads(line)
             asin = rec.get("parent_asin")
-            if asin is not None:
+            if asin:
                 yield asin, 1
-        except Exception:
-            return
+        except:
+            pass
 
-    def combiner(self, asin: str, counts: Iterator[int]) -> Iterator[Tuple[str, int]]:
+    def combiner_sum_reviews(self, asin, counts):
         yield asin, sum(counts)
 
-    def reducer_init(self):
-        self.heap = []  # (count, asin)
+    def reducer_sum_reviews(self, asin, counts):
+        yield asin, sum(counts)
 
-    def reducer(self, asin: str, counts: Iterator[int]):
-        total = sum(counts)
-        heapq.heappush(self.heap, (total, asin))
-        if len(self.heap) > 10:
-            heapq.heappop(self.heap)
+    def mapper_prepare_sort(self, asin, total_reviews):
+        # Flip key and value to sort by total_reviews
+        yield None, (total_reviews, asin)
 
-    def reducer_final(self):
-        for count, asin in sorted(self.heap, reverse=True):
+    def reducer_find_top10(self, _, asin_count_pairs):
+        top_10 = heapq.nlargest(10, asin_count_pairs)
+        for count, asin in top_10:
             yield asin, count
 
 if __name__ == "__main__":
